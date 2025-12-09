@@ -1,0 +1,8 @@
+{
+  "name": "module_defence",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/hurgyunam/module_defence.git",
+  "author": "hurgyunam",
+  "license": "MIT"
+}
