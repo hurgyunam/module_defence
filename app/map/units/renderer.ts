@@ -1,11 +1,11 @@
 // UnitRenderer.ts
-import * as PIXI from "pixi.js";
+import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { UnitSpec, UNIT_SPECS } from "./specs"; // 위의 정의 파일에서 import
 
 /**
  * 게임 맵의 유닛 한 개를 PixiJS로 렌더링하는 클래스입니다.
  */
-export class UnitRenderer extends PIXI.Container {
+export class UnitRenderer extends Container {
   private spec: UnitSpec;
   private tileSize: number;
 
@@ -32,7 +32,7 @@ export class UnitRenderer extends PIXI.Container {
     const size = this.tileSize;
 
     // 1. 사각형 모양 (Graphics) 그리기
-    const graphics = new PIXI.Graphics();
+    const graphics = new Graphics();
 
     // 테두리 설정 (borderThickness가 0보다 클 경우)
     if (borderThickness > 0) {
@@ -53,7 +53,7 @@ export class UnitRenderer extends PIXI.Container {
 
     // 2. 중앙 알파벳 (Text) 그리기
     if (letter) {
-      const textStyle = new PIXI.TextStyle({
+      const textStyle = new TextStyle({
         fontFamily: "Arial",
         fontSize: size * 0.4, // 타일 크기의 40% 정도 크기
         fill: 0x000000, // 텍스트 색상 (검은색)
@@ -61,7 +61,7 @@ export class UnitRenderer extends PIXI.Container {
         fontWeight: "bold",
       });
 
-      const text = new PIXI.Text(letter, textStyle);
+      const text = new Text(letter, textStyle);
 
       // 텍스트를 사각형 중앙에 위치시키기 위해 앵커를 중앙(0.5, 0.5)으로 설정
       text.anchor.set(0.5);

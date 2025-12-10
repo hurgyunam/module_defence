@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "isbot": "^5.1.32",
-    "pixi.js": "^8.14.3",
+    "pixi-viewport": "^6.0.3",
+    "pixi.js": "7",
     "react": "^19.2.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
