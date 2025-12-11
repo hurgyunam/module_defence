@@ -3,21 +3,23 @@ import { UnitRenderer } from "./units/renderer";
 import { UNIT_SPECS } from "./units/specs";
 import * as PixiViewport from "pixi-viewport";
 
-const TILE_SIZE = 50; // 각 타일/유닛의 크기 (픽셀)
-const MAP_COLS = 15; // 맵의 열 개수 (타일 기준)
-const MAP_ROWS = 10; // 맵의 행 개수 (타일 기준)
+const CANVAS_WIDTH_RATIO = 1920;
+const CANVAS_HEIGHT_RATIO = 1080;
+const VIEWPORT_WIDTH = 1920;
+const VIEWPORT_HEIGHT = 1080;
+
+const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
+const MAP_COLS = 40; // 맵의 열 개수 (타일 기준)
+const MAP_ROWS = 40; // 맵의 행 개수 (타일 기준)
 
 const WORLD_WIDTH = MAP_COLS * TILE_SIZE;
 const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE;
-const EDGE_SCROLL_THRESHOLD = 50;
-const EDGE_SCROLL_SPEED = 4;
 
 export default class GameMap {
   private app: Application;
   private viewport: PixiViewport.Viewport | null = null;
-  private screenWidth: number = 0;
-  private screenHeight: number = 0;
   private units: UnitRenderer[] = [];
+  private handleResize: () => void;
 
   // 팩토리 메서드: 비동기 초기화를 책임지고 인스턴스를 반환
   public static async create(canvas: HTMLCanvasElement): Promise<GameMap> {
@@ -25,98 +27,94 @@ export default class GameMap {
     canvas.height = canvas.offsetHeight || 600;
 
     const map = new GameMap(canvas);
-    await map.initializeAsync(canvas); // 비동기 초기화 완료를 기다림
     return map;
   }
 
   private constructor(canvas: HTMLCanvasElement) {
-    // 팩토리 메서드 사용 시 constructor는 비워둡니다.
-    this.app = new Application();
-    this.screenWidth = canvas.width;
-    this.screenHeight = canvas.height;
-
-    // Pixi v7 방식
+    // A. PIXI Application 초기화
     this.app = new Application({
       view: canvas,
-      resizeTo: canvas, // 옵션 추가하면 자동 리사이즈도 가능
-      width: canvas.width,
-      height: canvas.height,
-      backgroundColor: 0xeeeeee,
+      width: CANVAS_WIDTH_RATIO,
+      height: CANVAS_HEIGHT_RATIO,
+      backgroundColor: 0x1a1a1a,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
-      antialias: true,
     });
-  }
 
-  // 맵 초기화 및 유닛 배치 로직을 비동기 메서드로 분리
-  private async initializeAsync(canvas: HTMLCanvasElement): Promise<void> {
-    // [IMPORTANT] v8에서는 init()을 통해 옵션 전달 및 초기화
-
-    // 3. 맵 컨테이너 초기화
-    this.setupViewport();
-
-    // 4. 유닛 배치
-    this.initializeMap();
-
-    // 5. 렌더링 및 애니메이션 시작
-    this.app.ticker.add((delta) => this.update(delta));
-    this.app.ticker.add((delta) => this.updateEdgeScrolling(delta));
-
-    // 캔버스가 DOM에 추가되었는지 확인 (Remix/React 환경에서 필요할 수 있음)
-    // document.body.appendChild(this.app.canvas);
-  }
-
-  // --- 뷰포트 설정 메서드 ---
-  private setupViewport(): void {
+    // B. pixi-viewport 초기화 및 설정
     this.viewport = new PixiViewport.Viewport({
+      screenWidth: this.app.renderer.width,
+      screenHeight: this.app.renderer.height,
       worldWidth: WORLD_WIDTH,
       worldHeight: WORLD_HEIGHT,
-      screenWidth: this.screenWidth,
-      screenHeight: this.screenHeight,
-      events: this.app.renderer.events, // 마우스 이벤트를 뷰포트에 연결
+      events: this.app.renderer.events,
     });
 
     this.app.stage.addChild(this.viewport);
 
-    // viewport 기능 활성화
-    this.viewport.drag().pinch().wheel().clamp({ direction: "all" });
+    this.viewport
+      .drag()
+      .pinch()
+      .wheel()
+      .decelerate()
+      .clamp({ direction: "all" });
 
-    // DEBUG 박스
-    const box = new Graphics();
-    box.beginFill(0xff0000);
-    box.drawRect(0, 0, 50, 50);
-    box.endFill();
+    // C. 초기 크기 및 스케일 설정은 resizeCanvas에 위임
+    this.handleResize = () => {
+      if (this.app) {
+        this.resizeCanvas();
+      }
+    };
 
-    this.viewport.addChild(box);
+    window.addEventListener("resize", this.handleResize);
+    this.handleResize(); // 🚨 컴포넌트 마운트 시 초기 크기 및 뷰포트 스케일 설정
+
+    // D. 유닛 배치
+    this.initializeMap();
+
+    this.viewport.moveCorner(0, 0);
+
+    // 5. 렌더링 및 애니메이션 시작
+    // this.app.ticker.add((delta) => this.update(delta));
+    // this.app.ticker.add((delta) => this.updateEdgeScrolling(delta));
   }
 
-  // --- 엣지 스크롤링 로직 (Ticker에 추가) ---
-  private updateEdgeScrolling(delta: number): void {
-    if (!this.viewport) return;
+  private resizeCanvas(): void {
+    // 🚨 수정: window 객체가 클라이언트 환경에 있는지 확인 (혹시 모를 상황 대비)
+    if (typeof window === "undefined") return;
 
-    // 현재 마우스 위치 가져오기 (스크린 좌표)
-    const { x: mouseX, y: mouseY } = this.app.renderer.events.pointer.global;
+    const { innerWidth: windowW, innerHeight: windowH } = window;
 
-    // deltaTime에 비례하여 일정한 속도로 스크롤되도록 설정
-    const scrollSpeed = EDGE_SCROLL_SPEED * delta;
+    // ... (이하 resize 로직은 이전과 동일)
+    const ratio = CANVAS_WIDTH_RATIO / CANVAS_HEIGHT_RATIO;
+    let newWidth = windowW;
+    let newHeight = windowW / ratio;
 
-    // 좌우 스크롤
-    if (mouseX <= EDGE_SCROLL_THRESHOLD) {
-      // 마우스가 왼쪽 경계에 있으면 뷰포트를 오른쪽(x 증가)으로 이동
-      this.viewport.x += scrollSpeed;
-    } else if (mouseX >= this.screenWidth - EDGE_SCROLL_THRESHOLD) {
-      // 마우스가 오른쪽 경계에 있으면 뷰포트를 왼쪽(x 감소)으로 이동
-      this.viewport.x -= scrollSpeed;
+    if (newHeight > windowH) {
+      newHeight = windowH;
+      newWidth = windowH * ratio;
     }
 
-    // 상하 스크롤
-    if (mouseY <= EDGE_SCROLL_THRESHOLD) {
-      // 마우스가 위쪽 경계에 있으면 뷰포트를 아래(y 증가)로 이동
-      this.viewport.y += scrollSpeed;
-    } else if (mouseY >= this.screenHeight - EDGE_SCROLL_THRESHOLD) {
-      // 마우스가 아래쪽 경계에 있으면 뷰포트를 위(y 감소)로 이동
-      this.viewport.y -= scrollSpeed;
+    this.app.renderer.resize(newWidth, newHeight);
+
+    if (this.app.view.style) {
+      this.app.view.style.width = `${newWidth}px`;
+      this.app.view.style.height = `${newHeight}px`;
     }
+
+    if (this.viewport) {
+      this.viewport.screenWidth = newWidth;
+      this.viewport.screenHeight = newHeight;
+      this.viewport.resize(newWidth, newHeight);
+
+      // 리사이즈 시 스케일 재조정 (캔버스에 1920x1080 맵 영역이 항상 꽉 차도록)
+      const initialScaleX = newWidth / VIEWPORT_WIDTH;
+      const initialScaleY = newHeight / VIEWPORT_HEIGHT;
+      const newScale = Math.min(initialScaleX, initialScaleY);
+      this.viewport.scale.set(newScale);
+    }
+
+    // setWindowDimensions({ width: windowW, height: windowH });
   }
 
   /**
@@ -204,19 +202,18 @@ export default class GameMap {
   // (선택 사항) 맵의 다른 상태를 변경하거나 유닛을 제거하는 메소드 추가 가능
 
   public destroy(): void {
-    this.app.destroy(true);
+    window.removeEventListener("resize", this.handleResize);
+    this.app.destroy(true, {
+      children: true,
+      texture: true,
+      baseTexture: true,
+    });
     this.units = [];
     console.log("GameMap destroyed");
   }
 
   // GameMap.ts
-  public resize(width: number, height: number) {
-    this.app.renderer.resize(width, height);
-    this.screenWidth = width;
-    this.screenHeight = height;
-
-    if (this.viewport) {
-      this.viewport.resize(width, height);
-    }
+  public resize() {
+    this.handleResize();
   }
 }

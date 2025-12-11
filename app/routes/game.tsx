@@ -33,10 +33,9 @@ export default function GamePage() {
 
     // 리사이즈 이벤트 처리
     const onResize = () => {
-      const { width, height } = calculateCanvasSize();
       if (gameMap) {
         // Pixi Application 리사이즈
-        gameMap.resize(width, height);
+        gameMap.resize();
       }
     };
 
