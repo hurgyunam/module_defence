@@ -1,5 +1,5 @@
 declare module "pixi-viewport" {
-  import { Container } from "pixi.js";
+  import { Container, Rectangle } from "pixi.js";
 
   export interface PluginOptions {
     // 어떤 옵션이든 들어갈 수 있도록
@@ -9,7 +9,7 @@ declare module "pixi-viewport" {
   export class Viewport extends Container {
     screenWidth: number;
     screenHeight: number;
-    fitWorld: boolean;
+    fitWorld: (value: boolean) => void;
     fit: () => void;
     constructor(options?: any);
     // 필요한 메서드 추가 가능
@@ -31,7 +31,7 @@ declare module "pixi-viewport" {
       center?: boolean | { x: number; y: number }
     ): this;
     resize(screenWidth: number, screenHeight: number): void;
-    setZoom(rate: number, value: boolean): void;
+    setZoom(rate: number, value: boolean): PixiViewport.Viewport;
   }
   export default Viewport;
 }
