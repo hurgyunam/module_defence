@@ -7,6 +7,10 @@ declare module "pixi-viewport" {
   }
 
   export class Viewport extends Container {
+    screenWidth: number;
+    screenHeight: number;
+    fitWorld: boolean;
+    fit: () => void;
     constructor(options?: any);
     // 필요한 메서드 추가 가능
 
@@ -17,7 +21,9 @@ declare module "pixi-viewport" {
     decelerate(options?: PluginOptions): this;
     clamp(options?: PluginOptions): this;
     clampZoom(options?: PluginOptions): this;
+    translate(x: number, y?: number): this;
     moveCenter(x: number, y?: number): this;
+    moveCorner(x: number, y?: number): this;
     fitWidth(width: number): this;
     fitHeight(height: number): this;
     zoomPercent(
@@ -25,6 +31,7 @@ declare module "pixi-viewport" {
       center?: boolean | { x: number; y: number }
     ): this;
     resize(screenWidth: number, screenHeight: number): void;
+    setZoom(rate: number, value: boolean): void;
   }
   export default Viewport;
 }
