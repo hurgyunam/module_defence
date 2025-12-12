@@ -1,6 +1,6 @@
 // UnitRenderer.ts
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { UnitSpec, UNIT_SPECS } from "./specs"; // 위의 정의 파일에서 import
+import { UnitSpec, UNIT_SPECS } from "./GraphicsTypes"; // 위의 정의 파일에서 import
 
 /**
  * 게임 맵의 유닛 한 개를 PixiJS로 렌더링하는 클래스입니다.
