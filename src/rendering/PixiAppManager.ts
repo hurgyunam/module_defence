@@ -6,16 +6,18 @@ import {
   TickerCallback,
 } from "pixi.js";
 import { UnitRenderer } from "./Renderer";
-import PixiViewportManager from "./PixiViewportManager";
+import * as PixiViewport from "pixi-viewport";
 
 const CANVAS_WIDTH_RATIO = 1920;
 const CANVAS_HEIGHT_RATIO = 1080;
+const VIEWPORT_WIDTH = 1920;
+const VIEWPORT_HEIGHT = 1080;
 
 const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
 
 export default class PixiAppManager {
   private app: Application;
-  private viewport: PixiViewportManager;
+  private viewport: PixiViewport.Viewport;
   private units: UnitRenderer[] = [];
   private handleResize: () => void;
 
@@ -35,20 +37,39 @@ export default class PixiAppManager {
     });
 
     // B. pixi-viewport 초기화 및 설정
-    this.viewport = new PixiViewportManager(
-      this.app.renderer,
-      this.app.view,
-      mapColCount,
-      mapRowCount,
-      TILE_SIZE
-    );
+    // this.viewport = new PixiViewportManager(
+    //   this.app.renderer,
+    //   this.app.view,
+    //   mapColCount,
+    //   mapRowCount,
+    //   TILE_SIZE
+    // );
 
-    this.viewport.registViewport(this.app.stage);
+    this.viewport = new PixiViewport.Viewport({
+      screenWidth: this.app.renderer.width,
+      screenHeight: this.app.renderer.height,
+      worldWidth: mapColCount * TILE_SIZE,
+      worldHeight: mapRowCount * TILE_SIZE,
+      events: this.app.renderer.events,
+    });
+
+    this.viewport
+      .drag()
+      .pinch()
+      .wheel()
+      .decelerate()
+      .clamp({ direction: "all" });
+
+    this.viewport.moveCorner(0, 0);
+
+    this.app.stage.addChild(this.viewport);
+
+    // this.viewport.registViewport(this.app.stage);
 
     // C. 초기 크기 및 스케일 설정은 resizeCanvas에 위임
     this.handleResize = () => {
       if (this.app) {
-        this.viewport.resizeCanvas(CANVAS_WIDTH_RATIO / CANVAS_HEIGHT_RATIO);
+        this.resizeCanvas(CANVAS_WIDTH_RATIO / CANVAS_HEIGHT_RATIO);
       }
     };
 
@@ -63,6 +84,41 @@ export default class PixiAppManager {
     // 5. 렌더링 및 애니메이션 시작
     // this.app.ticker.add((delta) => this.update(delta));
     // this.app.ticker.add((delta) => this.updateEdgeScrolling(delta));
+  }
+
+  public resizeCanvas(canvasRatio: number): void {
+    // 🚨 수정: window 객체가 클라이언트 환경에 있는지 확인 (혹시 모를 상황 대비)
+    if (typeof window === "undefined") return;
+
+    const { innerWidth: windowW, innerHeight: windowH } = window;
+
+    // ... (이하 resize 로직은 이전과 동일)
+    let newWidth = windowW;
+    let newHeight = windowW / canvasRatio;
+
+    if (newHeight > windowH) {
+      newHeight = windowH;
+      newWidth = windowH * canvasRatio;
+    }
+
+    this.app.renderer.resize(newWidth, newHeight);
+
+    if (this.app.view.style) {
+      this.app.view.style.width = `${newWidth}px`;
+      this.app.view.style.height = `${newHeight}px`;
+    }
+
+    if (this.viewport) {
+      this.viewport.screenWidth = newWidth;
+      this.viewport.screenHeight = newHeight;
+      this.viewport.resize(newWidth, newHeight);
+
+      // 리사이즈 시 스케일 재조정 (캔버스에 1920x1080 맵 영역이 항상 꽉 차도록)
+      const initialScaleX = newWidth / VIEWPORT_WIDTH;
+      const initialScaleY = newHeight / VIEWPORT_HEIGHT;
+      const newScale = Math.min(initialScaleX, initialScaleY);
+      this.viewport.scale.set(newScale);
+    }
   }
 
   public addTicker(fn: (delta: number, tileSize: number) => void): Ticker {
