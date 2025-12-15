@@ -8,12 +8,8 @@ import {
 import { UnitRenderer } from "./UnitRenderer";
 import * as PixiViewport from "pixi-viewport";
 
-const CANVAS_WIDTH_RATIO = 1920;
-const CANVAS_HEIGHT_RATIO = 1080;
 const VIEWPORT_WIDTH = 1920;
 const VIEWPORT_HEIGHT = 1080;
-
-const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
 
 export default class PixiMainApp {
   private app: Application;
@@ -23,14 +19,16 @@ export default class PixiMainApp {
 
   public constructor(
     canvas: HTMLCanvasElement,
-    mapColCount: number,
-    mapRowCount: number
+    canvasWidthRatio: number,
+    canvasHeightRatio: number,
+    worldWidth: number,
+    worldHeight: number
   ) {
     // A. PIXI Application 초기화
     this.app = new Application({
       view: canvas,
-      width: CANVAS_WIDTH_RATIO,
-      height: CANVAS_HEIGHT_RATIO,
+      width: canvasWidthRatio,
+      height: canvasHeightRatio,
       backgroundColor: 0x1a1a1a,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
@@ -40,8 +38,8 @@ export default class PixiMainApp {
     this.viewport = new PixiViewport.Viewport({
       screenWidth: this.app.renderer.width,
       screenHeight: this.app.renderer.height,
-      worldWidth: mapColCount * TILE_SIZE,
-      worldHeight: mapRowCount * TILE_SIZE,
+      worldWidth: worldWidth,
+      worldHeight: worldHeight,
       events: this.app.renderer.events,
     });
 
@@ -61,7 +59,7 @@ export default class PixiMainApp {
     // C. 초기 크기 및 스케일 설정은 resizeCanvas에 위임
     this.handleResize = () => {
       if (this.app) {
-        this.resizeCanvas(CANVAS_WIDTH_RATIO / CANVAS_HEIGHT_RATIO);
+        this.resizeCanvas(canvasWidthRatio / canvasHeightRatio);
       }
     };
 
@@ -104,9 +102,9 @@ export default class PixiMainApp {
     }
   }
 
-  public addTicker(fn: (delta: number, tileSize: number) => void): Ticker {
+  public addTicker(fn: (delta: number) => void): Ticker {
     return this.app.ticker.add((delta: number) => {
-      fn(delta, TILE_SIZE);
+      fn(delta);
     });
   }
 
@@ -114,9 +112,14 @@ export default class PixiMainApp {
    * 지정된 ID의 유닛을 맵의 특정 타일 좌표에 추가합니다.
    * @returns 생성된 UnitRenderer 인스턴스
    */
-  public addUnit(unitId: string, mapX: number, mapY: number): UnitRenderer {
+  public addUnit(
+    unitId: string,
+    mapX: number,
+    mapY: number,
+    tileSize: number
+  ): UnitRenderer {
     if (this.viewport) {
-      const unit = new UnitRenderer(unitId, TILE_SIZE);
+      const unit = new UnitRenderer(unitId, tileSize);
       unit.setMapPosition(mapX, mapY);
       this.viewport.addChild(unit.getMainUnit());
       this.units.push(unit);

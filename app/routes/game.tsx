@@ -7,6 +7,10 @@ const CANVAS_WIDTH_VW = 80; // 뷰포트 상대 width
 const CANVAS_HEIGHT_VH = 80; // 뷰포트 상대 height
 const MAP_COL_COUNT = 100;
 const MAP_ROW_COUNT = 100;
+const CANVAS_WIDTH_RATIO = 1920;
+const CANVAS_HEIGHT_RATIO = 1080;
+
+const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
 
 export default function GamePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -18,28 +22,28 @@ export default function GamePage() {
     for (let y = 0; y < MAP_ROW_COUNT; y++) {
       for (let x = 0; x < MAP_COL_COUNT; x++) {
         // 일반적인 빈 땅 타일 배치
-        game.addUnit("tile-plain", x, y);
+        game.addUnit("tile-plain", x, y, TILE_SIZE);
       }
     }
 
     // 2. 특수 유닛 배치 예시
     // 산 배치
-    game.addUnit("tile-mountain", 5, 5);
-    game.addUnit("tile-mountain", 6, 5);
+    game.addUnit("tile-mountain", 5, 5, TILE_SIZE);
+    game.addUnit("tile-mountain", 6, 5, TILE_SIZE);
 
     // 자원 배치
-    game.addUnit("resource-A", 2, 8);
-    game.addUnit("resource-B", 12, 1);
+    game.addUnit("resource-A", 2, 8, TILE_SIZE);
+    game.addUnit("resource-B", 12, 1, TILE_SIZE);
 
     // 구조물 배치
-    game.addUnit("structure-combiner-5", 1, 1);
-    game.addUnit("defense-tower-10", 13, 8);
+    game.addUnit("structure-combiner-5", 1, 1, TILE_SIZE);
+    game.addUnit("defense-tower-10", 13, 8, TILE_SIZE);
 
     // 적 유닛 (레벨 10) 배치
-    const enemy = game.addUnit("enemy-10", 10, 3);
+    const enemy = game.addUnit("enemy-10", 10, 3, TILE_SIZE);
 
     // 아군 유닛 (드론) 배치 및 움직임 설정
-    drone.current = game.addUnit("unit-drone", 1, 8);
+    drone.current = game.addUnit("unit-drone", 1, 8, TILE_SIZE);
     setupDroneMovement(game, drone.current, 1, 10, 8);
   };
 
@@ -53,7 +57,7 @@ export default function GamePage() {
     let direction = 1; // 1: 오른쪽, -1: 왼쪽
     drone.setMapPosition(startX, mapY);
 
-    game.addTicker((delta, tileSize) => {
+    game.addTicker((delta) => {
       let currentTileX = drone.getTileX();
 
       if (currentTileX >= endX) direction = -1;
@@ -82,7 +86,17 @@ export default function GamePage() {
     // 초기 사이즈 계산
     calculateCanvasSize();
 
-    const game = new PixiMainApp(canvas, MAP_COL_COUNT, MAP_ROW_COUNT);
+    const worldWidth = MAP_COL_COUNT * TILE_SIZE;
+    const worldHeight = MAP_ROW_COUNT * TILE_SIZE;
+
+    const game = new PixiMainApp(
+      canvas,
+      CANVAS_WIDTH_RATIO,
+      CANVAS_HEIGHT_RATIO,
+      worldWidth,
+      worldHeight
+    );
+
     setGame(game);
     initializeMap(game);
 
