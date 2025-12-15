@@ -1,7 +1,7 @@
 // app/routes/game.tsx
 import { useEffect, useRef, useState } from "react";
-import PixiAppManager from "src/rendering/PixiAppManager";
-import { UnitRenderer } from "src/rendering/Renderer";
+import PixiMainApp from "src/rendering/PixiMainApp";
+import { UnitRenderer } from "src/rendering/UnitRenderer";
 
 const CANVAS_WIDTH_VW = 80; // 뷰포트 상대 width
 const CANVAS_HEIGHT_VH = 80; // 뷰포트 상대 height
@@ -10,10 +10,10 @@ const MAP_ROW_COUNT = 100;
 
 export default function GamePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [game, setGame] = useState<PixiAppManager | null>(null);
+  const [game, setGame] = useState<PixiMainApp | null>(null);
   const drone = useRef<UnitRenderer | null>(null);
 
-  const initializeMap = (game: PixiAppManager): void => {
+  const initializeMap = (game: PixiMainApp): void => {
     // 1. 기본 타일 채우기 (예: 빈 땅)
     for (let y = 0; y < MAP_ROW_COUNT; y++) {
       for (let x = 0; x < MAP_COL_COUNT; x++) {
@@ -44,7 +44,7 @@ export default function GamePage() {
   };
 
   const setupDroneMovement = (
-    game: PixiAppManager,
+    game: PixiMainApp,
     drone: UnitRenderer,
     startX: number,
     endX: number,
@@ -54,12 +54,12 @@ export default function GamePage() {
     drone.setMapPosition(startX, mapY);
 
     game.addTicker((delta, tileSize) => {
-      let currentTileX = drone.x / tileSize;
+      let currentTileX = drone.getTileX();
 
       if (currentTileX >= endX) direction = -1;
       else if (currentTileX <= startX) direction = 1;
 
-      drone.x += direction * 1.5 * delta;
+      drone.setTileX(currentTileX + (direction * 1.5 * delta) / 100);
     });
   };
 
@@ -82,7 +82,7 @@ export default function GamePage() {
     // 초기 사이즈 계산
     calculateCanvasSize();
 
-    const game = new PixiAppManager(canvas, MAP_COL_COUNT, MAP_ROW_COUNT);
+    const game = new PixiMainApp(canvas, MAP_COL_COUNT, MAP_ROW_COUNT);
     setGame(game);
     initializeMap(game);
 

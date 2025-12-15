@@ -5,7 +5,7 @@ import {
   Ticker,
   TickerCallback,
 } from "pixi.js";
-import { UnitRenderer } from "./Renderer";
+import { UnitRenderer } from "./UnitRenderer";
 import * as PixiViewport from "pixi-viewport";
 
 const CANVAS_WIDTH_RATIO = 1920;
@@ -15,7 +15,7 @@ const VIEWPORT_HEIGHT = 1080;
 
 const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
 
-export default class PixiAppManager {
+export default class PixiMainApp {
   private app: Application;
   private viewport: PixiViewport.Viewport;
   private units: UnitRenderer[] = [];
@@ -37,14 +37,6 @@ export default class PixiAppManager {
     });
 
     // B. pixi-viewport 초기화 및 설정
-    // this.viewport = new PixiViewportManager(
-    //   this.app.renderer,
-    //   this.app.view,
-    //   mapColCount,
-    //   mapRowCount,
-    //   TILE_SIZE
-    // );
-
     this.viewport = new PixiViewport.Viewport({
       screenWidth: this.app.renderer.width,
       screenHeight: this.app.renderer.height,
@@ -75,15 +67,6 @@ export default class PixiAppManager {
 
     window.addEventListener("resize", this.handleResize);
     this.handleResize(); // 🚨 컴포넌트 마운트 시 초기 크기 및 뷰포트 스케일 설정
-
-    // D. 유닛 배치
-    // this.initializeMap();
-
-    // this.viewport.moveCorner(0, 0);
-
-    // 5. 렌더링 및 애니메이션 시작
-    // this.app.ticker.add((delta) => this.update(delta));
-    // this.app.ticker.add((delta) => this.updateEdgeScrolling(delta));
   }
 
   public resizeCanvas(canvasRatio: number): void {
@@ -135,7 +118,7 @@ export default class PixiAppManager {
     if (this.viewport) {
       const unit = new UnitRenderer(unitId, TILE_SIZE);
       unit.setMapPosition(mapX, mapY);
-      this.viewport.addChild(unit);
+      this.viewport.addChild(unit.getMainUnit());
       this.units.push(unit);
       return unit;
     } else {

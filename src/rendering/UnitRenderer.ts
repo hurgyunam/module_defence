@@ -5,17 +5,17 @@ import { UnitSpec, UNIT_SPECS } from "./GraphicsTypes"; // 위의 정의 파일�
 /**
  * 게임 맵의 유닛 한 개를 PixiJS로 렌더링하는 클래스입니다.
  */
-export class UnitRenderer extends Container {
+export class UnitRenderer {
   private spec: UnitSpec;
   private tileSize: number;
+
+  private mainUnit: Container;
 
   /**
    * @param unitId 렌더링할 유닛의 ID (unit-specs.ts에 정의됨)
    * @param tileSize 렌더링할 타일의 크기 (픽셀)
    */
   constructor(unitId: string, tileSize: number) {
-    super();
-
     const spec = UNIT_SPECS.find((s) => s.id === unitId);
     if (!spec) {
       throw new Error(`UnitSpec not found for id: ${unitId}`);
@@ -24,10 +24,11 @@ export class UnitRenderer extends Container {
     this.spec = spec;
     this.tileSize = tileSize;
 
-    this.drawUnit();
+    this.mainUnit = this.buildMainUnit();
   }
 
-  private drawUnit(): void {
+  private buildMainUnit(): Container {
+    const unit = new Container();
     const { backgroundColor, borderThickness, letter } = this.spec;
     const size = this.tileSize;
 
@@ -49,7 +50,7 @@ export class UnitRenderer extends Container {
     graphics.drawRect(0, 0, size, size);
     graphics.endFill();
 
-    this.addChild(graphics);
+    unit.addChild(graphics);
 
     // 2. 중앙 알파벳 (Text) 그리기
     if (letter) {
@@ -70,8 +71,30 @@ export class UnitRenderer extends Container {
       text.x = size / 2;
       text.y = size / 2;
 
-      this.addChild(text);
+      unit.addChild(text);
     }
+
+    return unit;
+  }
+
+  public getMainUnit(): Container {
+    return this.mainUnit;
+  }
+
+  public getTileX(): number {
+    return this.mainUnit.x / this.tileSize;
+  }
+
+  public getTileY(): number {
+    return this.mainUnit.y / this.tileSize;
+  }
+
+  public setTileX(x: number) {
+    this.mainUnit.x = x * this.tileSize;
+  }
+
+  public setTileY(y: number) {
+    this.mainUnit.y = y * this.tileSize;
   }
 
   /**
@@ -80,8 +103,8 @@ export class UnitRenderer extends Container {
    * @param mapY 맵 상의 Y 좌표 (타일 인덱스)
    */
   public setMapPosition(mapX: number, mapY: number): void {
-    this.x = mapX * this.tileSize;
-    this.y = mapY * this.tileSize;
+    this.mainUnit.x = mapX * this.tileSize;
+    this.mainUnit.y = mapY * this.tileSize;
   }
 
   /** 유닛 사양을 반환합니다. */
