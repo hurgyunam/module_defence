@@ -7,6 +7,7 @@ import {
 } from "pixi.js";
 import { UnitRenderer } from "./UnitRenderer";
 import * as PixiViewport from "pixi-viewport";
+import PixiMinimapApp from "./PixiMinimapApp";
 
 const VIEWPORT_WIDTH = 1920;
 const VIEWPORT_HEIGHT = 1080;
@@ -105,6 +106,24 @@ export default class PixiMainApp {
   public addTicker(fn: (delta: number) => void): Ticker {
     return this.app.ticker.add((delta: number) => {
       fn(delta);
+    });
+  }
+
+  public addMinimapTicker(minimapApp: PixiMinimapApp) {
+    return this.app.ticker.add(() => {
+      const worldX = -this.viewport.x / this.viewport.scale.x;
+      const worldY = -this.viewport.y / this.viewport.scale.y;
+      const visibleWorldWidth =
+        this.viewport.screenWidth / this.viewport.scale.x;
+      const visibleWorldHeight =
+        this.viewport.screenHeight / this.viewport.scale.y;
+
+      minimapApp.setMainViewportRect({
+        x: worldX,
+        y: worldY,
+        width: visibleWorldWidth,
+        height: visibleWorldHeight,
+      });
     });
   }
 

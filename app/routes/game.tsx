@@ -1,6 +1,7 @@
 // app/routes/game.tsx
 import { useEffect, useRef, useState } from "react";
 import PixiMainApp from "src/rendering/PixiMainApp";
+import PixiMinimapApp from "src/rendering/PixiMinimapApp";
 import { UnitRenderer } from "src/rendering/UnitRenderer";
 
 const CANVAS_WIDTH_VW = 80; // 뷰포트 상대 width
@@ -9,6 +10,8 @@ const MAP_COL_COUNT = 100;
 const MAP_ROW_COUNT = 100;
 const CANVAS_WIDTH_RATIO = 1920;
 const CANVAS_HEIGHT_RATIO = 1080;
+const MINIMAP_SIZE = 200;
+const MINIMAP_MARGIN = 20;
 
 const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
 
@@ -16,6 +19,9 @@ export default function GamePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [game, setGame] = useState<PixiMainApp | null>(null);
   const drone = useRef<UnitRenderer | null>(null);
+
+  const minimapCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const minimapAppRef = useRef<PixiMinimapApp | null>(null);
 
   const initializeMap = (game: PixiMainApp): void => {
     // 1. 기본 타일 채우기 (예: 빈 땅)
@@ -69,8 +75,10 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    if (!minimapCanvasRef.current) return;
 
     const canvas = canvasRef.current;
+    const minimapCanvas = minimapCanvasRef.current;
 
     // 캔버스 크기 계산 함수
     const calculateCanvasSize = () => {
@@ -98,6 +106,19 @@ export default function GamePage() {
     );
 
     setGame(game);
+
+    const minimapApp = new PixiMinimapApp(
+      minimapCanvas,
+      MINIMAP_SIZE,
+      MINIMAP_SIZE,
+      worldWidth,
+      worldHeight
+    );
+
+    minimapAppRef.current = minimapApp;
+
+    game.addMinimapTicker(minimapApp);
+
     initializeMap(game);
 
     // 리사이즈 이벤트 처리
@@ -147,6 +168,17 @@ export default function GamePage() {
           width: `${CANVAS_WIDTH_VW}vw`,
           height: `${CANVAS_HEIGHT_VH}vh`,
           display: "block",
+        }}
+      />
+      <canvas
+        ref={minimapCanvasRef}
+        style={{
+          position: "absolute",
+          bottom: `${MINIMAP_MARGIN}px`,
+          left: `${MINIMAP_MARGIN}px`,
+          border: "2px solid #fff",
+          boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+          zIndex: "10",
         }}
       />
     </div>
