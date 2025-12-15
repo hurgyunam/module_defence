@@ -6,8 +6,8 @@ import { UnitRenderer } from "src/rendering/UnitRenderer";
 
 const CANVAS_WIDTH_VW = 80; // 뷰포트 상대 width
 const CANVAS_HEIGHT_VH = 80; // 뷰포트 상대 height
-const MAP_COL_COUNT = 100;
-const MAP_ROW_COUNT = 100;
+const MAP_COL_COUNT = 30;
+const MAP_ROW_COUNT = 30;
 const CANVAS_WIDTH_RATIO = 1920;
 const CANVAS_HEIGHT_RATIO = 1080;
 const MINIMAP_SIZE = 200;
@@ -17,40 +17,57 @@ const TILE_SIZE = 100; // 각 타일/유닛의 크기 (픽셀)
 
 export default function GamePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [game, setGame] = useState<PixiMainApp | null>(null);
+  const [mainApp, setMainApp] = useState<PixiMainApp | null>(null);
   const drone = useRef<UnitRenderer | null>(null);
 
   const minimapCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const minimapAppRef = useRef<PixiMinimapApp | null>(null);
 
-  const initializeMap = (game: PixiMainApp): void => {
+  const initializeMap = (
+    mainApp: PixiMainApp,
+    minimapApp: PixiMinimapApp
+  ): void => {
     // 1. 기본 타일 채우기 (예: 빈 땅)
     for (let y = 0; y < MAP_ROW_COUNT; y++) {
       for (let x = 0; x < MAP_COL_COUNT; x++) {
         // 일반적인 빈 땅 타일 배치
-        game.addUnit("tile-plain", x, y, TILE_SIZE);
+        addUnit(mainApp, minimapApp, "tile-plain", x, y);
       }
     }
 
     // 2. 특수 유닛 배치 예시
     // 산 배치
-    game.addUnit("tile-mountain", 5, 5, TILE_SIZE);
-    game.addUnit("tile-mountain", 6, 5, TILE_SIZE);
+    addUnit(mainApp, minimapApp, "tile-mountain", 5, 5);
+    addUnit(mainApp, minimapApp, "tile-mountain", 6, 5);
 
     // 자원 배치
-    game.addUnit("resource-A", 2, 8, TILE_SIZE);
-    game.addUnit("resource-B", 12, 1, TILE_SIZE);
+    addUnit(mainApp, minimapApp, "resource-A", 2, 8);
+    addUnit(mainApp, minimapApp, "resource-B", 12, 1);
 
     // 구조물 배치
-    game.addUnit("structure-combiner-5", 1, 1, TILE_SIZE);
-    game.addUnit("defense-tower-10", 13, 8, TILE_SIZE);
+    addUnit(mainApp, minimapApp, "structure-combiner-5", 1, 1);
+    addUnit(mainApp, minimapApp, "defense-tower-10", 13, 8);
 
     // 적 유닛 (레벨 10) 배치
-    const enemy = game.addUnit("enemy-10", 10, 3, TILE_SIZE);
+    const enemy = addUnit(mainApp, minimapApp, "enemy-10", 10, 3);
 
     // 아군 유닛 (드론) 배치 및 움직임 설정
-    drone.current = game.addUnit("unit-drone", 1, 8, TILE_SIZE);
-    setupDroneMovement(game, drone.current, 1, 10, 8);
+    drone.current = addUnit(mainApp, minimapApp, "unit-drone", 1, 8);
+    setupDroneMovement(mainApp, drone.current, 1, 10, 8);
+  };
+
+  const addUnit = (
+    mainApp: PixiMainApp,
+    minimapApp: PixiMinimapApp,
+    id: string,
+    mapX: number,
+    mapY: number
+  ) => {
+    const unit = mainApp.addUnit(id, mapX, mapY, TILE_SIZE);
+
+    minimapApp.addUnit(unit, mapX, mapY);
+
+    return unit;
   };
 
   const setupDroneMovement = (
@@ -97,7 +114,7 @@ export default function GamePage() {
     const worldWidth = MAP_COL_COUNT * TILE_SIZE;
     const worldHeight = MAP_ROW_COUNT * TILE_SIZE;
 
-    const game = new PixiMainApp(
+    const mainApp = new PixiMainApp(
       canvas,
       CANVAS_WIDTH_RATIO,
       CANVAS_HEIGHT_RATIO,
@@ -105,7 +122,7 @@ export default function GamePage() {
       worldHeight
     );
 
-    setGame(game);
+    setMainApp(mainApp);
 
     const minimapApp = new PixiMinimapApp(
       minimapCanvas,
@@ -117,15 +134,15 @@ export default function GamePage() {
 
     minimapAppRef.current = minimapApp;
 
-    game.addMinimapTicker(minimapApp);
+    initializeMap(mainApp, minimapApp);
 
-    initializeMap(game);
+    mainApp.addMinimapTicker(minimapApp);
 
     // 리사이즈 이벤트 처리
     const onResize = () => {
-      if (game) {
+      if (mainApp) {
         // Pixi Application 리사이즈
-        game.resize();
+        mainApp.resize();
       }
     };
 
@@ -134,23 +151,23 @@ export default function GamePage() {
     // 클린업
     return () => {
       window.removeEventListener("resize", onResize);
-      if (game) {
-        game.destroy();
+      if (mainApp) {
+        mainApp.destroy();
       }
     };
   }, [canvasRef]);
 
   useEffect(() => {
     return () => {
-      if (game) {
-        game.destroy();
+      if (mainApp) {
+        mainApp.destroy();
       }
     };
   }, []); // 의존성 없음 → 언마운트 시에만 실행
 
   return (
     <div style={{ position: "relative" }}>
-      {!game && (
+      {!mainApp && (
         <div
           style={{
             position: "absolute",

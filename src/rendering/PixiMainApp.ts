@@ -110,6 +110,8 @@ export default class PixiMainApp {
   }
 
   public addMinimapTicker(minimapApp: PixiMinimapApp) {
+    minimapApp.initViewportRect();
+
     return this.app.ticker.add(() => {
       const worldX = -this.viewport.x / this.viewport.scale.x;
       const worldY = -this.viewport.y / this.viewport.scale.y;

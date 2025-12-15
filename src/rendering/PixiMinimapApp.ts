@@ -6,6 +6,7 @@ export default class PixiMinimapApp {
   private app: Application;
   private viewport: PixiViewport.Viewport;
   private viewportRect: Graphics;
+  private units: UnitRenderer[] = [];
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -39,12 +40,24 @@ export default class PixiMinimapApp {
     minimapBackground.endFill();
     this.viewport.addChild(minimapBackground);
 
-    this.viewportRect = new Graphics();
-    this.viewport.addChild(this.viewportRect);
-
     this.viewport.fitWorld(true);
     this.viewport.moveCenter(worldWidth / 2, worldHeight / 2);
     this.viewport.interactive = false;
+  }
+
+  public addUnit(unit: UnitRenderer, mapX: number, mapY: number): UnitRenderer {
+    if (this.viewport) {
+      this.viewport.addChild(unit.getMinimapUnit());
+      this.units.push(unit);
+      return unit;
+    } else {
+      throw `viewport가 정의되지 않았습니다.`;
+    }
+  }
+
+  public initViewportRect() {
+    this.viewportRect = new Graphics();
+    this.viewport.addChild(this.viewportRect);
   }
 
   public setMainViewportRect({
