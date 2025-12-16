@@ -4,7 +4,7 @@
  * 게임 유닛의 시각적 및 논리적 속성을 정의하는 인터페이스.
  * 배경색, 테두리, 표시할 알파벳 등을 포함합니다.
  */
-export interface UnitSpec {
+export interface UnitGraphicSpec {
   /** 유닛의 고유 ID (예: 'tile-plain', 'mountain', 'resource-A') */
   id: string;
   /** 유닛이 속한 카테고리 (예: '타일', '자원', '아군 유닛') */
@@ -30,7 +30,7 @@ const hexToNumber = (hex: string): number => {
 /**
  * 게임 내 모든 유닛 타입에 대한 사양 정의.
  */
-export const UNIT_SPECS: UnitSpec[] = [
+export const UNIT_GRAPHIC_SPECS: UnitGraphicSpec[] = [
   // --- 타일 ---
   {
     id: "tile-plain",

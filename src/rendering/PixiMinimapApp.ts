@@ -5,7 +5,7 @@ import { UnitRenderer } from "./UnitRenderer";
 export default class PixiMinimapApp {
   private app: Application;
   private viewport: PixiViewport.Viewport;
-  private viewportRect: Graphics;
+  private viewportRect: Graphics | null = null;
   private units: UnitRenderer[] = [];
 
   constructor(
@@ -71,8 +71,22 @@ export default class PixiMinimapApp {
     width: number;
     height: number;
   }) {
-    this.viewportRect.clear();
-    this.viewportRect.lineStyle(50, 0xff0000, 1);
-    this.viewportRect.drawRect(x, y, width, height);
+    if (this.viewportRect) {
+      this.viewportRect.clear();
+      this.viewportRect.lineStyle(50, 0xff0000, 1);
+      this.viewportRect.drawRect(x, y, width, height);
+    } else {
+      console.error("minimap viewport rect is not initialized");
+    }
+  }
+
+  public destroy(): void {
+    this.app.destroy(true, {
+      children: true,
+      texture: true,
+      baseTexture: true,
+    });
+    this.units = [];
+    console.log("PixiAppManager destroyed");
   }
 }

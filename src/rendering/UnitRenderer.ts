@@ -1,12 +1,12 @@
 // UnitRenderer.ts
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { UnitSpec, UNIT_SPECS } from "./GraphicsTypes"; // 위의 정의 파일에서 import
+import { UnitGraphicSpec, UNIT_GRAPHIC_SPECS } from "./GraphicsTypes"; // 위의 정의 파일에서 import
 
 /**
  * 게임 맵의 유닛 한 개를 PixiJS로 렌더링하는 클래스입니다.
  */
 export class UnitRenderer {
-  private spec: UnitSpec;
+  private spec: UnitGraphicSpec;
   private tileSize: number;
 
   private mainUnit: Container;
@@ -17,7 +17,7 @@ export class UnitRenderer {
    * @param tileSize 렌더링할 타일의 크기 (픽셀)
    */
   constructor(unitId: string, tileSize: number) {
-    const spec = UNIT_SPECS.find((s) => s.id === unitId);
+    const spec = UNIT_GRAPHIC_SPECS.find((s) => s.id === unitId);
     if (!spec) {
       throw new Error(`UnitSpec not found for id: ${unitId}`);
     }
@@ -136,19 +136,19 @@ export class UnitRenderer {
 
   /**
    * 맵 좌표계를 위한 위치 설정 헬퍼
-   * @param mapX 맵 상의 X 좌표 (타일 인덱스)
-   * @param mapY 맵 상의 Y 좌표 (타일 인덱스)
+   * @param tileX 맵 상의 X 좌표 (타일 인덱스)
+   * @param tileY 맵 상의 Y 좌표 (타일 인덱스)
    */
-  public setMapPosition(mapX: number, mapY: number): void {
-    this.mainUnit.x = mapX * this.tileSize;
-    this.mainUnit.y = mapY * this.tileSize;
+  public setMapPosition(tileX: number, tileY: number): void {
+    this.mainUnit.x = tileX * this.tileSize;
+    this.mainUnit.y = tileY * this.tileSize;
 
-    this.minimapUnit.x = mapX * this.tileSize;
-    this.minimapUnit.y = mapY * this.tileSize;
+    this.minimapUnit.x = tileX * this.tileSize;
+    this.minimapUnit.y = tileY * this.tileSize;
   }
 
   /** 유닛 사양을 반환합니다. */
-  public getSpec(): UnitSpec {
+  public getSpec(): UnitGraphicSpec {
     return this.spec;
   }
 }
