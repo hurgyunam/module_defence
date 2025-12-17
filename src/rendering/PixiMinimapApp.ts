@@ -84,7 +84,6 @@ export default class PixiMinimapApp {
     this.app.destroy(true, {
       children: true,
       texture: true,
-      baseTexture: true,
     });
     this.units = [];
     console.log("PixiAppManager destroyed");

@@ -15,60 +15,41 @@ export default function GameView() {
   const gameRef = useRef<GameController | null>(null);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    if (!minimapCanvasRef.current) return;
+    let isCancelled = false;
 
-    const canvas = canvasRef.current;
-    const minimapCanvas = minimapCanvasRef.current;
+    const initGame = async () => {
+      if (!canvasRef.current || !minimapCanvasRef.current) return;
 
-    // 캔버스 크기 계산 함수
-    const calculateCanvasSize = () => {
-      const width = window.innerWidth * (CANVAS_WIDTH_VW / 100);
-      const height = window.innerHeight * (CANVAS_HEIGHT_VH / 100);
-
-      canvas.width = width;
-      canvas.height = height;
-
-      return { width, height };
-    };
-
-    // 초기 사이즈 계산
-    calculateCanvasSize();
-
-    gameRef.current = new GameController(
-      canvas,
-      minimapCanvas,
-      testMapSpec,
-      MINIMAP_SIZE,
-      MINIMAP_SIZE
-    );
-
-    // 리사이즈 이벤트 처리
-    const onResize = () => {
-      if (gameRef.current) {
-        // Pixi Application 리사이즈
-        gameRef.current.resize();
-      }
-    };
-
-    window.addEventListener("resize", onResize);
-
-    // 클린업
-    return () => {
-      window.removeEventListener("resize", onResize);
+      // 이전 인스턴스가 아직 파괴 중일 수 있으므로 확실히 비워줌
       if (gameRef.current) {
         gameRef.current.destroy();
+        gameRef.current = null;
       }
-    };
-  }, [canvasRef]);
 
-  useEffect(() => {
+      // 잠시 대기 (브라우저가 GPU 리소스를 정리할 시간을 줌 - 0ms여도 효과 있음)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      if (isCancelled) return;
+
+      gameRef.current = new GameController(
+        canvasRef.current,
+        minimapCanvasRef.current,
+        testMapSpec,
+        MINIMAP_SIZE,
+        MINIMAP_SIZE
+      );
+    };
+
+    initGame();
+
     return () => {
+      isCancelled = true;
       if (gameRef.current) {
         gameRef.current.destroy();
+        gameRef.current = null;
       }
     };
-  }, []); // 의존성 없음 → 언마운트 시에만 실행
+  }, []);
 
   return (
     <div style={{ position: "relative" }}>

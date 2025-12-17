@@ -33,6 +33,9 @@ export default class PixiMainApp {
       backgroundColor: 0x1a1a1a,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
+      hello: true, // 콘솔에 렌더러 정보 출력
+      preserveDrawingBuffer: true, // 컨텍스트 보존 시도
+      antialias: true,
     });
 
     // B. pixi-viewport 초기화 및 설정
@@ -162,12 +165,49 @@ export default class PixiMainApp {
   // (선택 사항) 맵의 다른 상태를 변경하거나 유닛을 제거하는 메소드 추가 가능
 
   public destroy(): void {
-    window.removeEventListener("resize", this.handleResize);
-    this.app.destroy(true, {
-      children: true,
-      texture: true,
-      baseTexture: true,
-    });
+    // Cleanup 함수 또는 클래스 소멸자 내부
+    if (this.handleResize) {
+      window.removeEventListener("resize", this.handleResize);
+    }
+
+    if (this.viewport) {
+      this.viewport.destroy({ children: true });
+    }
+
+    if (this.app) {
+      // 🚨 핵심 해결책: PixiJS v7 내부 버그 방어
+      // Application이 destroy될 때 내부적으로 cancelResize를 호출하는데,
+      // 특정 상황에서 이 메서드가 누락되어 에러가 납니다.
+      // @ts-ignore
+      if (typeof this.app.cancelResize !== "function") {
+        // @ts-ignore
+        this.app.cancelResize = () => {};
+      }
+
+      // 3. Ticker 중지
+      this.app.ticker.stop();
+      this.app.stop();
+
+      // 🚨 타입을 Renderer(WebGL)로 캐스팅하여 gl 속성에 접근
+      const renderer = this.app.renderer as any; // 가장 간단한 방법
+
+      // 2. WebGL 컨텍스트 강제 해제 시도 (핵심)
+      if (renderer.gl) {
+        const gl = renderer.gl;
+        const loseContextExtension = gl.getExtension("WEBGL_lose_context");
+        if (loseContextExtension) {
+          loseContextExtension.loseContext();
+        }
+      }
+
+      // 4. 애플리케이션 파괴
+      this.app.destroy(true, {
+        children: true,
+        texture: true,
+        baseTexture: true, // v7에서는 이것까지 처리하는 것이 안전함
+      });
+    }
+
     this.units = [];
     console.log("PixiAppManager destroyed");
   }
