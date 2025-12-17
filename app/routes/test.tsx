@@ -1,11 +1,11 @@
 // app/routes/game.tsx
-import GameView from "@/components/GameView";
-import TestMinimap from "@/components/test/TestMinimap";
+import NestedDndPage from "@/components/test/NestedDndPage";
+import TestBlock from "@/components/test/TestBlock";
 
 export default function GamePage() {
   return (
     <div>
-      <TestMinimap />
+      <NestedDndPage />
     </div>
   );
 }
