@@ -1,17 +1,16 @@
 import { useDraggable } from "@dnd-kit/core";
+import { BlockPaletteItem } from "src/coding/BlockItem";
 
 //1. 드래그 가능한 사이드바 아이템
 export default function DraggablePaletteItem({
-  id,
-  label,
+  item,
 }: {
-  id: string;
-  label: string;
+  item: BlockPaletteItem;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
-      id: `palette-${id}`,
-      data: { type: id },
+      id: item.id,
+      data: item,
     });
 
   const style = transform
@@ -31,7 +30,7 @@ export default function DraggablePaletteItem({
         isDragging ? "opacity-50 ring-2 ring-blue-500" : ""
       }`}
     >
-      {label}
+      {item.label}
     </div>
   );
 }

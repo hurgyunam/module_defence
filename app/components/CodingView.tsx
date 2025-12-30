@@ -11,13 +11,12 @@ import {
 } from "@dnd-kit/core";
 import DraggablePaletteItem from "./coding/DraggablePaletteItem";
 import CanvasZone from "./coding/CanvasZone";
-
-// --- 데이터 타입 ---
-interface BlockItem {
-  id: string;
-  type: string;
-  children: BlockItem[];
-}
+import {
+  BlockItem,
+  BlockPaletteItem,
+  blockPaletteItems,
+  buildBlockItemByPaletteItem,
+} from "src/coding/BlockItem";
 
 export default function CodingView() {
   const dndId = useId();
@@ -40,12 +39,13 @@ export default function CodingView() {
     if (!over) return;
 
     // 새 블록 생성 (사이드바 아이템 드래그 시)
-    const type = active.data.current?.type as string;
-    const newBlock: BlockItem = {
-      id: `block-${Date.now()}`,
-      type,
-      children: [],
-    };
+    const current = active.data.current as BlockPaletteItem | null | undefined;
+
+    console.log("hello", active, over);
+
+    if (!current) return;
+
+    const newBlock: BlockItem = buildBlockItemByPaletteItem(current);
 
     if (over.id === "canvas-root") {
       setBlocks((prev) => [...prev, newBlock]);
@@ -77,8 +77,9 @@ export default function CodingView() {
         {/* 사이드바 */}
         <div className="w-64 flex flex-col gap-4 z-50">
           <h2 className="text-xl font-bold text-blue-400 mb-4">Elements</h2>
-          <DraggablePaletteItem id="CONTAINER" label="📦 Container" />
-          <DraggablePaletteItem id="TEXT" label="📝 Text Block" />
+          {blockPaletteItems.map((item) => (
+            <DraggablePaletteItem item={item} key={item.id} />
+          ))}
 
           <div className="mt-auto p-4 bg-gray-800 rounded border border-gray-700 text-xs text-gray-400">
             블록을 캔버스나 <br />

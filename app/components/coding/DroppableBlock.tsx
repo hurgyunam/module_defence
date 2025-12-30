@@ -8,8 +8,6 @@ export default function DroppableBlock({ block }: { block: BlockItem }) {
     data: { block },
   });
 
-  const isContainer = block.type === "CONTAINER";
-
   return (
     <div
       ref={setNodeRef}
@@ -26,7 +24,7 @@ export default function DroppableBlock({ block }: { block: BlockItem }) {
       {/* 자식 블록들이 렌더링되는 영역 */}
       <div
         className={`space-y-2 ${
-          isContainer
+          block.isContainer
             ? "min-h-[40px] border border-dashed border-gray-500 p-2 rounded"
             : ""
         }`}
@@ -34,7 +32,7 @@ export default function DroppableBlock({ block }: { block: BlockItem }) {
         {block.children.map((child) => (
           <DroppableBlock key={child.id} block={child} />
         ))}
-        {isContainer && block.children.length === 0 && (
+        {block.isContainer && block.children.length === 0 && (
           <div className="text-[10px] text-gray-500 text-center py-2">
             자식을 여기에 드롭
           </div>
